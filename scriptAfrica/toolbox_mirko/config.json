@@ -1,0 +1,14 @@
+{
+    "use_sector_table": {
+        "emp_serv":  "SERV",
+        "emp_agr":   "AGR",
+        "emp_gov":   "GOV",
+        "emp_ind":   "IND",
+        "ic_low":    "RES_LI", 
+        "ic_high":   "RES_MHI", 
+        "ic_mhg":    "RES_MHI", 
+        "ic_mlow":    "RES_MHI"
+    },
+
+    "band_order": ["RES_LI", "RES_MHI", "SERV", "AGR", "GOV", "IND"]
+}
