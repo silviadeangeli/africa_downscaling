@@ -33,6 +33,31 @@ use_sector_table = {
 }
 band_order = ["RES_LI", "RES_MHI", "SERV", "AGR", "GOV", "IND"]
 
+
+def readMultiBandGeotiff(file):
+    """
+        read a multiband geotiff and returns an array of 2d images
+        if the band count is 1, it returns a single image
+        
+        example (multiband):       
+            data_1, data_2, data_3, data_4, data_5, data_6 = readMultiBandGeotiff(file)
+
+        example (singleband):       
+            data = readMultiBandGeotiff(file)
+        
+    """
+
+    with rio.open(file) as f:
+        if f.count == 1:
+            data = f.read(1)
+            return data
+        else:
+            ret_vals = []
+            for band in range(f.count):
+                data = f.read(band+1)
+                ret_vals.append(data)
+            return ret_vals
+
 def log_print(s):
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {s}")
 

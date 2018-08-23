@@ -35,64 +35,62 @@ def readMultiBandGeotiff(file):
                 ret_vals.append(data)
             return ret_vals
 
+
+print('start')
 #########################################
 ############## FILE PATH  ###############
 #########################################
 
-path_valfis = "E:/africa_downscaling/Rwanda/RW_valfis/"
-sFile_C1 = path_valfis + "C1.tif"
+path_valfis = "E:/africa_downscaling/data/gm/GAR_downscaled/"
 sFile_M1 = path_valfis + "M1.tif"
 sFile_M2 = path_valfis + "M2.tif"
 sFile_W1 = path_valfis + "W1.tif"
 
-path_p = "E:/africa_downscaling/Rwanda/percent_int_20180806/"
-sFile_C1_p = path_p + "C1.tiff"
+path_p = "E:/africa_downscaling/data/gm/extract_use/"
 sFile_M1_p = path_p + "M1.tiff"
 sFile_M2_p = path_p + "M2.tiff"
 sFile_W1_p = path_p + "W1.tiff"
 
 # outputs
-sFile_hous = "E:/africa_downscaling/Rwanda/new_sectors_0806/rw_housing.tif"
-sFile_ind = "E:/africa_downscaling/Rwanda/new_sectors_0806/rw_industrial.tif"
-sFile_serv = "E:/africa_downscaling/Rwanda/new_sectors_0806/rw_services.tif"
+sFile_hous = "E:/africa_downscaling/gm/gm_housing.tif"
+sFile_ind = "E:/africa_downscaling/gm/gm_industrial.tif"
+sFile_serv = "E:/africa_downscaling/gm/gm_services.tif"
 
 
-[xsize, ysize, geotransform, geoproj, data_C1]   = readFile_withNoData(sFile_C1)
-log_print(ysize)
-log_print(xsize)
-log_print(np.sum(data_C1))
+print('read files 1')
 [xsize, ysize, geotransform, geoproj, data_M1]   = readFile(sFile_M1)
 [xsize, ysize, geotransform, geoproj, data_M2]   = readFile(sFile_M2)
-#[xsize, ysize, geotransform, geoproj, data_T1]   = readFile(sFile_T1)
 [xsize, ysize, geotransform, geoproj, data_W1]   = readFile(sFile_W1)
 
-
-data_C1_p1, data_C1_p2, data_C1_p3, _, data_C1_p5, data_C1_p6 = readMultiBandGeotiff(sFile_C1_p)
-
+print('read files 2')
 #[xsize, ysize, geotransform, geoproj, data_C1_p1]   = readFileBand(sFile_C1_p, 1)
 [xsize, ysize, geotransform, geoproj, data_M1_p1]   = readFileBand(sFile_M1_p, 1)
 [xsize, ysize, geotransform, geoproj, data_M2_p1]   = readFileBand(sFile_M2_p, 1)
 #[xsize, ysize, geotransform, geoproj, data_T1_p1]   = readFileBand(sFile_T1_p, 1)
 [xsize, ysize, geotransform, geoproj, data_W1_p1]   = readFileBand(sFile_W1_p, 1)
 
+print('read files 3')
 #[xsize, ysize, geotransform, geoproj, data_C1_p2]   = readFileBand(sFile_C1_p, 2)
 [xsize, ysize, geotransform, geoproj, data_M1_p2]   = readFileBand(sFile_M1_p, 2)
 [xsize, ysize, geotransform, geoproj, data_M2_p2]   = readFileBand(sFile_M2_p, 2)
 #[xsize, ysize, geotransform, geoproj, data_T1_p2]   = readFileBand(sFile_T1_p, 2)
 [xsize, ysize, geotransform, geoproj, data_W1_p2]   = readFileBand(sFile_W1_p, 2)
 
+print('read files 4')
 #[xsize, ysize, geotransform, geoproj, data_C1_p3]   = readFileBand(sFile_C1_p, 3)
 [xsize, ysize, geotransform, geoproj, data_M1_p3]   = readFileBand(sFile_M1_p, 3)
 [xsize, ysize, geotransform, geoproj, data_M2_p3]   = readFileBand(sFile_M2_p, 3)
 #[xsize, ysize, geotransform, geoproj, data_T1_p3]   = readFileBand(sFile_T1_p, 3)
 [xsize, ysize, geotransform, geoproj, data_W1_p3]   = readFileBand(sFile_W1_p, 3)
 
+print('read files 5')
 #[xsize, ysize, geotransform, geoproj, data_C1_p5]   = readFileBand(sFile_C1_p, 5)
 [xsize, ysize, geotransform, geoproj, data_M1_p5]   = readFileBand(sFile_M1_p, 5)
 [xsize, ysize, geotransform, geoproj, data_M2_p5]   = readFileBand(sFile_M2_p, 5)
 #[xsize, ysize, geotransform, geoproj, data_T1_p5]   = readFileBand(sFile_T1_p, 5)
 [xsize, ysize, geotransform, geoproj, data_W1_p5]   = readFileBand(sFile_W1_p, 5)
 
+print('read files 6')
 #[xsize, ysize, geotransform, geoproj, data_C1_p6]   = readFileBand(sFile_C1_p, 6)
 [xsize, ysize, geotransform, geoproj, data_M1_p6]   = readFileBand(sFile_M1_p, 6)
 [xsize, ysize, geotransform, geoproj, data_M2_p6]   = readFileBand(sFile_M2_p, 6)
@@ -100,20 +98,21 @@ data_C1_p1, data_C1_p2, data_C1_p3, _, data_C1_p5, data_C1_p6 = readMultiBandGeo
 [xsize, ysize, geotransform, geoproj, data_W1_p6]   = readFileBand(sFile_W1_p, 6)
 
 
-data_hous = (data_C1*data_C1_p1+data_C1*data_C1_p2+data_M1*data_M1_p1+data_M1*data_M1_p2+data_M2*data_M2_p1+data_M2*data_M2_p2+data_W1*data_W1_p1+data_W1*data_W1_p2)/100
+print('calc stats')
+data_hous = (data_M1*data_M1_p1+data_M1*data_M1_p2+data_M2*data_M2_p1+data_M2*data_M2_p2+data_W1*data_W1_p1+data_W1*data_W1_p2)/100
 
 hous_tot = np.sum(data_hous)
 
 log_print(f'total housing: [{hous_tot}]')
 
 
-data_ind = (data_C1*data_C1_p6+data_M1*data_M1_p6+data_M2*data_M2_p6+data_W1*data_W1_p6)/100
+data_ind = (data_M1*data_M1_p6+data_M2*data_M2_p6+data_W1*data_W1_p6)/100
 
 ind_tot = np.sum(data_ind)
 
 log_print(f'total industrial: [{ind_tot}]')
 
-data_serv = (data_C1*data_C1_p3+data_C1*data_C1_p5+data_M1*data_M1_p3+data_M1*data_M1_p5+data_M2*data_M2_p3+data_M2*data_M2_p5+data_W1*data_W1_p3+data_W1*data_W1_p5)/100
+data_serv = (data_M1*data_M1_p3+data_M1*data_M1_p5+data_M2*data_M2_p3+data_M2*data_M2_p5+data_W1*data_W1_p3+data_W1*data_W1_p5)/100
 
 serv_tot = np.sum(data_serv)
 

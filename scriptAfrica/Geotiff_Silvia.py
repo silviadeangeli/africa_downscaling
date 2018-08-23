@@ -10,7 +10,6 @@ def readFile(filename):
     geotransform = filehandle.GetGeoTransform()
     geoproj = filehandle.GetProjection()
     band1data = band1.ReadAsArray()
-    print(band1data)
     xsize = filehandle.RasterXSize
     ysize = filehandle.RasterYSize
     return xsize,ysize,geotransform,geoproj,band1data
