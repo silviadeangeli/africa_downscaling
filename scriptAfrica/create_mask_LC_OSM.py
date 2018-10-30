@@ -16,10 +16,12 @@ import matplotlib.pylab as plt
 sFileGUF =       "/Users/silvia/Documents/AFRICA_DATA/Guinea_Bissau/original_layers/GW_GUF.tif"
 sFileGHSL =      "/Users/silvia/Documents/AFRICA_DATA/Guinea_Bissau/original_layers/GW_GHSL.tif"
 sFileWorldPop =  "/Users/silvia/Documents/AFRICA_DATA/Guinea_Bissau/original_layers/GW_WP.tif"
+sFileLC = "/Users/silvia/Documents/AFRICA_DATA/Guinea_Bissau/original_layers/GW_ESA.tif"
+sFileOSM = "/Users/silvia/Documents/AFRICA_DATA/Guinea_Bissau/original_layers/GW_OSM.tif"
 sFileFinalGrid = "/Users/silvia/Documents/AFRICA_DATA/Guinea_Bissau/original_layers/gw_box.tif"
 
 # output directory
-dir_out="/Users/silvia/Documents/AFRICA_DATA/Guinea_Bissau/regrid_outputs"
+dir_out="/Users/silvia/Documents/AFRICA_DATA/Guinea_Bissau/regrid_outputs_20181018"
 
 if not os.path.exists (dir_out):
     os.mkdir(dir_out)
@@ -28,14 +30,18 @@ if not os.path.exists (dir_out):
 sFileGUF_regrid = join(dir_out, "GW_buiA_GUF_90m.tif")
 sFileGHSL_regrid = join(dir_out, "GW_buiA_GHSL_90m.tif")
 sFileWorldPop_regrid = join(dir_out, "GW_pop_WP_90m.tif")
+sFileLC_regrid = join(dir_out, "GW_buiA_LC_90m.tif")
+sFileOSM_regrid = join(dir_out, "GW_buiA_OSM_90m.tif")
+
 
 # regridded merged outputs
 sFileGHSL_GUF_regrid = join(dir_out, "GW_buiA_GHSL_GUF_90m.tif")
-sFileMaskWPop1  = join(dir_out, "GW_buiA_GHSL_GUF_wp1_90m.tif")
-sFileMaskWPop2  = join(dir_out, "GW_buiA_GHSL_GUF_wp2_90m.tif")
-sFileMaskWPop3  = join(dir_out, "GW_buiA_GHSL_GUF_wp3_90m.tif")
-sFileMaskWPop5  = join(dir_out, "GW_buiA_GHSL_GUF_wp5_90m.tif")
-sFileMaskWPop10 = join(dir_out, "GW_buiA_GHSL_GUF_wp10_90m.tif")
+sFileGHSL_GUF_LC_OSM_regrid = join(dir_out, "GW_buiA_GHSL_GUF_LC_OSM_90m.tif")
+sFileMaskWPop1  = join(dir_out, "GW_buiA_GHSL_GUF_LC_OSM_wp1_90m.tif")
+sFileMaskWPop2  = join(dir_out, "GW_buiA_GHSL_GUF_LC_OSM_wp2_90m.tif")
+sFileMaskWPop3  = join(dir_out, "GW_buiA_GHSL_GUF_LC_OSM_wp3_90m.tif")
+sFileMaskWPop5  = join(dir_out, "GW_buiA_GHSL_GUF_LC_OSM_wp5_90m.tif")
+sFileMaskWPop10 = join(dir_out, "GW_buiA_GHSL_GUF_LC_OSM_wp10_90m.tif")
 
 #########################################
 #########################################
@@ -46,10 +52,15 @@ sFileMaskWPop10 = join(dir_out, "GW_buiA_GHSL_GUF_wp10_90m.tif")
 # regrid and read GRID
 [xsize, ysize, geotransform, geoproj, data_grid]   = readFile_withNoData(sFileFinalGrid)
 
-# regrid and read GUF and GHSL
+# regrid and read GUF, LC, OSM and GHSL
 match_geotrans, match_proj = rasterRegrid(sFileGUF, sFileFinalGrid, sFileGUF_regrid ,"nearest")
 [xsize, ysize, geotransform, geoproj, data_GUF]   = readFile(sFileGUF_regrid)
 
+match_geotrans, match_proj = rasterRegrid(sFileLC, sFileFinalGrid, sFileLC_regrid ,"nearest")
+[xsize, ysize, geotransform, geoproj, data_LC]   = readFile(sFileLC_regrid)
+
+match_geotrans, match_proj = rasterRegrid(sFileOSM, sFileFinalGrid, sFileOSM_regrid ,"nearest")
+[xsize, ysize, geotransform, geoproj, data_OSM]   = readFile(sFileOSM_regrid)
 
 #os.system ("gdal_translate -of GTIFF -projwin 33.8 5.2 42.3 -5 -projwin_srs EPSG:4326 GHS_BUILT_LDSMT_GLOBE_R2015B_3857_38_v1_0.vrt Kenya.tif")
 sFileGHSL4326 = sFileGHSL.split(".")[0]+"4326.tif"
@@ -72,9 +83,17 @@ data_GUF_GHSL = (data_GUF + data_GHSL)
 data_GUF_GHSL [data_GUF_GHSL >= 1] = 1
 data_GUF_GHSL [data_GUF_GHSL < 1] = 0
 
+data_GUF_GHSL_LC_OSM = (data_GUF_GHSL + data_LC + data_OSM)
+data_GUF_GHSL_LC_OSM [data_GUF_GHSL_LC_OSM >= 1] = 1
+data_GUF_GHSL_LC_OSM [data_GUF_GHSL_LC_OSM < 1] = 0
+
 #Save merge GUF + GHSL
 data_GUF_GHSL = data_GUF_GHSL * data_grid
 writeGeotiffSingleBand(sFileGHSL_GUF_regrid, geotransform, geoproj, data_GUF_GHSL)
+
+#Save merge GUF + GHSL + LC + OSM
+data_GUF_GHSL_LC_OSM = data_GUF_GHSL_LC_OSM * data_grid
+writeGeotiffSingleBand(sFileGHSL_GUF_LC_OSM_regrid, geotransform, geoproj, data_GUF_GHSL_LC_OSM)
 del data_GUF, data_GHSL
 
 #regrid world pop to 90m
@@ -86,7 +105,7 @@ match_geotrans, match_proj = rasterRegrid(sFileWorldPop, sFileFinalGrid, sFileWo
 data_merge_WorldPop1 = np.copy(data_WorldPop)
 data_merge_WorldPop1 [data_merge_WorldPop1 < 1]= 0
 data_merge_WorldPop1 [data_merge_WorldPop1 >= 1]= 1
-data_merge_WorldPop1 = (data_GUF_GHSL+ data_merge_WorldPop1)
+data_merge_WorldPop1 = (data_GUF_GHSL_LC_OSM+ data_merge_WorldPop1)
 data_merge_WorldPop1 [data_merge_WorldPop1 >= 1]= 1
 
 #Save merge World Pop 1
@@ -97,7 +116,7 @@ del data_merge_WorldPop1
 data_merge_WorldPop2 = np.copy(data_WorldPop)
 data_merge_WorldPop2 [data_merge_WorldPop2 < 2]= 0
 data_merge_WorldPop2 [data_merge_WorldPop2 >= 2]= 1
-data_merge_WorldPop2 = (data_GUF_GHSL + data_merge_WorldPop2)
+data_merge_WorldPop2 = (data_GUF_GHSL_LC_OSM + data_merge_WorldPop2)
 data_merge_WorldPop2 [data_merge_WorldPop2 >= 1]= 1
 
 #Save merge World Pop 2
@@ -108,7 +127,7 @@ del data_merge_WorldPop2
 data_merge_WorldPop3 = np.copy(data_WorldPop)
 data_merge_WorldPop3 [data_merge_WorldPop3 < 3]= 0
 data_merge_WorldPop3 [data_merge_WorldPop3 >= 3]= 1
-data_merge_WorldPop3 = (data_GUF_GHSL+ data_merge_WorldPop3)
+data_merge_WorldPop3 = (data_GUF_GHSL_LC_OSM + data_merge_WorldPop3)
 data_merge_WorldPop3 [data_merge_WorldPop3 >= 1]= 1
 
 #Save merge World Pop 3
@@ -119,7 +138,7 @@ del data_merge_WorldPop3
 data_merge_WorldPop5 = np.copy(data_WorldPop)
 data_merge_WorldPop5 [data_merge_WorldPop5 < 5]= 0
 data_merge_WorldPop5 [data_merge_WorldPop5 >= 5]= 1
-data_merge_WorldPop5 = (data_GUF_GHSL+ data_merge_WorldPop5)
+data_merge_WorldPop5 = (data_GUF_GHSL_LC_OSM + data_merge_WorldPop5)
 data_merge_WorldPop5 [data_merge_WorldPop5 >= 1]= 1
 
 #Save merge World Pop 5
@@ -130,7 +149,7 @@ del data_merge_WorldPop5
 data_merge_WorldPop10 = np.copy(data_WorldPop)
 data_merge_WorldPop10 [data_merge_WorldPop10 < 10]= 0
 data_merge_WorldPop10 [data_merge_WorldPop10 >= 10]= 1
-data_merge_WorldPop10 = (data_GUF_GHSL+ data_merge_WorldPop10)
+data_merge_WorldPop10 = (data_GUF_GHSL_LC_OSM + data_merge_WorldPop10)
 data_merge_WorldPop10 [data_merge_WorldPop10 >= 1]= 1
 
 #Save merge World Pop 10

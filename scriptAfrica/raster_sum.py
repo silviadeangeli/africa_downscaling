@@ -13,13 +13,20 @@ from africa_tools import log_print
 ############## FILE PATH  ###############
 #########################################
 
-sFile = "E:/africa_downscaling/ao/ao_industrial.tif"
 
-[xsize, ysize, geotransform, geoproj, data]   = readFile(sFile)
+def raster_sum(data):
+    
+    data [data <= 0] = 0
 
-tot = np.sum(data)
+    tot = np.nansum(data)
 
-log_print(f'total: [{tot}]')
+    log_print(f'total: [{tot}]')
+    return tot
 
-
-
+if __name__ == '__main__':
+    
+    sFile = '/Users/silvia/Desktop/GDP/TZ_gdp_2050_90m_normalizedWP_20181001.tif'
+    [xsize, ysize, geotransform, geoproj, data]   = readFile(sFile)
+    raster_sum(data)
+    
+    

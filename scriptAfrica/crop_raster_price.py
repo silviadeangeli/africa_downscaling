@@ -201,14 +201,14 @@ def downscale_crop (sFileMapSpamLowResTot,sFileMask, sFileClipper, sFilePrice):
 bDisplayImages = 0
 bVerbose = 0 
 
-sFileMask = '/africa_downscaling/crops/cuts/sz_crops_mask.tif'
-sFileBoundary = '/africa_downscaling/sz/SZ_bou_GAUL_admin0_20180626/SZ_bou_GAUL_admin0_20180626.shp'
-sFilePrice = "/africa_downscaling/sz/CropsPrice.txt"
+sFileMask = '/Users/silvia/Documents/AFRICA_DATA/Guinea_Bissau/GW_agrM_ESA_90m_20180628.tif'
+sFileBoundary = '/Users/silvia/Documents/AFRICA_DATA/Guinea_Bissau/GW_bou_GAUL_admin0_20180901/GW_bou_GAUL_admin0_20180901.shp'
+sFilePrice = '/Users/silvia/Documents/AFRICA_DATA/Guinea_Bissau/CropsPrice.txt'
 
 cropPrice = readPrice (sFilePrice)
 
 # crop production directory
-dirIn = '/africa_downscaling/sz/crops'
+dirIn = '/Users/silvia/Documents/AFRICA_DATA/Guinea_Bissau/Crops'
 
 for file in os.listdir(dirIn):
     if  file.startswith('spam') and file.endswith('tiff'):

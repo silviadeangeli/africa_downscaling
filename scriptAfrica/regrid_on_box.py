@@ -13,18 +13,18 @@ import matplotlib.pylab as plt
 #########################################
 
 # original inputs
-sFileOriginalRaster =  "E:/africa_downscaling/crops/ESA_CCI_LC_cut_crops.tif"
-sFileFinalGrid = "E:/africa_downscaling/crops/zm_GAUL.tif"
+sFileOriginalRaster = "/Users/silvia/Documents/AFRICA_DATA/Botswana/BW_pop_HRSL_90m_sum.tif"  
+sFileFinalGrid = "/Users/silvia/Documents/AFRICA_DATA/Botswana/original_layers/bw_box.tif"  
 
 # output directory
-dir_out="E:/africa_downscaling/crops/cuts"
+dir_out= "/Users/silvia/Documents/AFRICA_DATA/Botswana/regridded_hrsl"
 
 if not os.path.exists (dir_out):
     os.mkdir(dir_out)
 
 # regridded outputs
-sFileOriginalRaster_regrid = join(dir_out, "zm_crops.tif")
-sFileOriginalRaster_masked = join(dir_out, "zm_crops_mask.tif")
+sFileOriginalRaster_regrid = join(dir_out, "hrsl_bw_pop_sum_90m_regridded.tif")
+sFileOriginalRaster_regrid_m = join(dir_out, "hrsl_bw_buiA_mask_90m_regridded.tif")
 
 
 #########################################
@@ -40,10 +40,10 @@ match_geotrans, match_proj = rasterRegrid(sFileOriginalRaster, sFileFinalGrid, s
 
 [xsize, ysize, geotransform, geoproj, data_OriginalRaster_regrid]   = readFile_withNoData(sFileOriginalRaster_regrid)
 
-data_OriginalRaster_masked = data_OriginalRaster_regrid * data_grid
-writeGeotiffSingleBand(sFileOriginalRaster_masked,geotransform,geoproj, data_OriginalRaster_masked)
+writeGeotiffSingleBand(sFileOriginalRaster_regrid,geotransform,geoproj, data_OriginalRaster_regrid)
 
-
+data_OriginalRaster_regrid [data_OriginalRaster_regrid > 0 ] = 1
+writeGeotiffSingleBand(sFileOriginalRaster_regrid_m,geotransform,geoproj, data_OriginalRaster_regrid)
 
 
 

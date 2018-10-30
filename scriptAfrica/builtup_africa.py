@@ -1,6 +1,6 @@
 __author__ = 'lauro'
 
-from Geotiff import readFile, writeFile, writeGeotiffSingleBand
+from Geotiff import readFile, readFile_withNoData, writeFile, writeGeotiffSingleBand
 from collections import Counter
 from osgeo import gdal, gdalconst, ogr
 import os, sys, csv, getopt
@@ -9,6 +9,10 @@ import numpy as np
 from rasterRegrid import rasterRegrid
 import datetime
 import random
+from progressbar import ProgressBar as PB
+
+# default nan value
+NAN_VALUE = np.nan
 
 #os.system(gdal_translate -a_srs EPSG:32736 -outsize 25% 25% -of GTiff -co COMPRESS=DEFLATE /Users/lauro/Documents/PROJECTS/FP7_H2020/RASOR_2012/MALAWI/crop/annual_crop_MW.tif /Users/lauro/Documents/PROJECTS/FP7_H2020/RASOR_2012/MALAWI/crop/annual_crop_60m.tif)
 
@@ -24,6 +28,7 @@ def displayHelp():
     print ('         -i | --input                            input file or single population value')
     print ('         -m | --mask                             file name of high res mask')
     print ('         -e | --exposure                         exposure type: VALFIS or VALHUM')
+    print ('   -n VALUE | --nan VALUE                        replaces nan values with VALUE')
     print ('         -f | --filter                           attribute filter name (filter), ALL takes all attributes')
     print ('\nUse -f ALL is VALHUM is selected')
     print ('\nExample: python builtup_africa.py -i input.shp -m mask.tif -e [VALFIS|VALHUM] -f BUILDING_TYPE')
@@ -63,12 +68,12 @@ def plot_image(data):
     fig = plt.figure()
     cax = plt.imshow(data, cmap='Blues')
     plt.colormaps()
-    #plt.clim(0,400)
+    plt.clim(0,400)
     cbar = fig.colorbar(cax, orientation='vertical')
     #cbar.ax.set_yticklabels(['< -1', '0', 1, 2,'> 10'])# vertically oriented colorbar
     plt.show()
 
-def downscale_pop(sFileGARPoint,sFileMask,sExposureType):
+def downscale_pop(sFileGARPoint, sFileMask, sExposureType):
     #sBuildingType = "UFB"
     #sBuildingType = "UCB"
 
@@ -161,7 +166,9 @@ def downscale_pop(sFileGARPoint,sFileMask,sExposureType):
 
     data_low=np.reshape(uniq, data_low.shape)
 
-    writeGeotiffSingleBand(sFileGARRasterEXPLowRes, geotransform, geoproj, data_low)
+    writeGeotiffSingleBand(sFileGARRasterEXPLowRes, 
+                    geotransform, geoproj, 
+                    data_low, nan_value=NAN_VALUE)
 
     if bDisplayImages: plot_image(data_low)
     # DEBUG
@@ -238,8 +245,13 @@ def downscale_pop(sFileGARPoint,sFileMask,sExposureType):
     elif sExposureType == "VALFIS":
         description = 'VALFIS in ' + sCurveType + ' (downscaling of GAR2015 data)'
 
-    iNbands=1;
-    writeFile(sFileDownscaled, match_geotrans, match_proj, data_high_masked, bandMetadata, description, {'Building_type': sCurveType},iNbands)
+    iNbands = 1
+    
+    writeFile(sFileDownscaled, match_geotrans, match_proj, 
+                data_high_masked, bandMetadata, description, 
+                {'Building_type': sCurveType}, iNbands, 
+                nan_value=NAN_VALUE)
+
     log_print("Total downscaled exposure value (for curve type="+sCurveType+", exposure type="+sExposureType+"): %.2f" % np.sum(data_high_masked))
     log_print ("Exposure downscaled. Final result save in file: " + sFileDownscaled)
 
@@ -267,7 +279,10 @@ def single_value_to_population(value, file_mask):
     description = 'Downscaled value'
     bandMetadata = {}
     bandMetadata[('unit', '1')] = 'people'
-    writeFile(file_downscaled, geotransform, geoproj, new_data, bandMetadata, description, {}, 1)
+    writeFile(file_downscaled, geotransform, 
+            geoproj, new_data, bandMetadata, 
+            description, {}, 1, 
+            nan_value=NAN_VALUE)
 
 
 def downscale(sFileGARPoint, sFileMask, sBuildingType, sExposureType):
@@ -375,7 +390,11 @@ def downscale(sFileGARPoint, sFileMask, sBuildingType, sExposureType):
     uniq = non_unique (data_low.ravel().tolist())
     data_low=np.reshape(uniq, data_low.shape)
 
-    writeGeotiffSingleBand(sFileGARRasterEXPLowRes, geotransform, geoproj, data_low)
+    #writeGeotiffSingleBand(sFileGARRasterEXPLowRes, geotransform, geoproj, data_low, nan_value=NAN_VALUE)
+
+    writeGeotiffSingleBand(sFileGARRasterEXPLowRes,
+                    geotransform, geoproj,
+                    data_low)
 
     if bDisplayImages: plot_image(data_low)
 
@@ -386,25 +405,43 @@ def downscale(sFileGARPoint, sFileMask, sBuildingType, sExposureType):
     match_geotrans, match_proj = rasterRegrid(sFileGARRasterEXPLowRes, sFileMask, sFileGARRasterEXPHiRes ,"nearest")
 
     [xsize, ysize, geotransform_high, geoproj_high, data_high]   = readFile(sFileGARRasterEXPHiRes)
-    [xsize, ysize, geotransform_high, geoproj_high, data_mask]   = readFile(sFileMask, fix_nan_value=255)
-    
+    #[xsize, ysize, geotransform_high, geoproj_high, data_mask]   = readFile(sFileMask, fix_nan_value=255)
+    [xsize, ysize, geotransform_high, geoproj_high, data_mask]   = readFile(sFileMask)
 
+    #data_mask_zeroes = data_mask.copy()
+    #data_mask[data_mask==0] = np.nan
     data_high_masked = data_high * data_mask
-
+    
     if bDisplayImages:
         plot_image(data_mask)
         plot_image(data_high)
         plot_image(data_high_masked)
 
     log_print ("Starting counting...")
-    dictCounter = Counter(data_high_masked.ravel().tolist())
+    # take out the nan values from the array
+    values = data_high_masked.ravel()
+    values = values[~np.isnan(values)]
+
+    dictCounter = Counter()
+    # show a progressbar if the array is "big"
+    # count 1000 elements at a time
+    if len(values)>1000000:
+        stride = 1000
+        bar = PB()
+        for v in bar(range(0, len(values), stride)):
+            dictCounter.update(values[v:v+stride])
+    else:
+        dictCounter.update(values)
+
     log_print ("Data counted")
 
-    data_mask_gar=np.copy(data_high)
+    data_mask_gar = np.copy(data_high)
     ratio = abs ((geotransform[1]*geotransform[5]) / (geotransform_high[1]*geotransform_high[5])) #number of high res pixels in low res pixel
 
     data_gar_excluded = []
-    for key in data_high.ravel().tolist():    # for name, age in list.items():  (for Python 3.x)
+
+    unique =  np.unique(data_high.ravel())
+    for key in unique:
         if key not in dictCounter.keys() and key != 0 :
             dictCounter[key] = ratio
             data_mask_gar[data_mask_gar==key]=-9999
@@ -419,7 +456,9 @@ def downscale(sFileGARPoint, sFileMask, sBuildingType, sExposureType):
     data_mask[data_mask>0] = 1
     data_high_masked = data_high * data_mask
 
-    del data_mask, data_high, data_mask_gar
+    #plot_image(data_mask)
+
+    del data_high, data_mask_gar
 
     if bVerbose: log_print ("Counter length: "+str(dictCounter.__len__()))
     if bVerbose: log_print ("Unique length: "+str(len(np.unique(data_high_masked))))
@@ -438,18 +477,40 @@ def downscale(sFileGARPoint, sFileMask, sBuildingType, sExposureType):
 
     sFileDownscaled = os.path.join(dir_out, sFileGARPointBase.split('.')[0] + "_"+sBuildingType+"_"+sExposureType+"_HighRes.tif")
     bandMetadata = {}
-    bandMetadata[("unit", "1")] = "Millions USD"
+    bandMetadata[("unit", "1")] = "USD"
 
     if sExposureType == "VALHUM":
         description = 'VALHUM in ' + sBuildingType + ' (downscaling of GAR2015 data)'
     elif sExposureType == "VALFIS":
         description = 'VALFIS in ' + sBuildingType + ' (downscaling of GAR2015 data)'
 
-    iNbands=1;
-    writeFile(sFileDownscaled, match_geotrans, match_proj, data_high_masked, bandMetadata, description, {'Building_type': sBuildingType},iNbands)
+    iNbands = 1
+    data_high_masked_USD = data_high_masked*1000000
+
+    #plot_image(data_high_masked_USD)
+
+    #writeFile(sFileDownscaled, match_geotrans, match_proj, data_high_masked_USD,bandMetadata, description, {'Building_type': sBuildingType}, iNbands, nan_value=NAN_VALUE)
+
+    writeFile(sFileDownscaled, match_geotrans,
+                match_proj, data_high_masked_USD,
+                bandMetadata, description,
+                {'Building_type': sBuildingType}, iNbands)
+
+
     log_print("Total downscaled exposure value (for curve type="+sCurveType+", exposure type="+sExposureType+"): %.2f" % np.sum(data_high_masked))
     log_print ("Exposure downscaled. Final result save in file: " + sFileDownscaled)
 
+    sMaskFileDownscaled = os.path.join(dir_out, sFileGARPointBase.split('.')[0] + "_mask_HighRes.tif")    
+    
+    #writeFile(sMaskFileDownscaled, match_geotrans, match_proj, data_mask, bandMetadata, description, {}, iNbands,nan_value=NAN_VALUE)
+
+    writeFile(sMaskFileDownscaled, match_geotrans,
+                match_proj, data_mask,
+                bandMetadata, description,
+                {}, iNbands)
+
+    log_print ("Mask saved in file: " + sMaskFileDownscaled)
+    
 if __name__ == "__main__":
 
     bVerbose = False
@@ -460,8 +521,8 @@ if __name__ == "__main__":
     try:
         a1Opts, a1Args = getopt.getopt(
                            argv,
-                           "vhi:m:e:f:",
-                           ["verbose","help","input=","mask=","exposure=","filter="]
+                           "vhi:m:e:f:n:",
+                           ["verbose","help","input=","mask=","exposure=","filter=","nan="]
         )
     except getopt.GetoptError:
         displayHelp();
@@ -470,7 +531,11 @@ if __name__ == "__main__":
         print ('\nPlease provide an input file...')
         displayHelp();
         sys.exit(2);
+    
+    # default filter none
+    sCurveType = 'ALL'
     for opt, arg in a1Opts:
+        print(opt, arg)
         if opt in ('-h',"--help"):
             displayHelp();
             sys.exit()
@@ -492,9 +557,10 @@ if __name__ == "__main__":
             sExposureType = arg
         elif opt in ("-f", "--filter"):
             sCurveType = arg
+        elif opt in ("-n", "--nan"):
+            NAN_VALUE = float(arg)
         elif opt in ("-v", "--verbose"):
             bVerbose=True
-
         else:
             print ('\nPlease provide an input files...')
             displayHelp();
